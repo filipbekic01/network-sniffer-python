@@ -11,16 +11,16 @@ class Sniffer:
 
         # create a raw socket and bind it to the public interface
         s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
-        s.bind((HOST, 0))
+        s.bind((HOST, 0)) # ip like 192.168.1.1
 
         # Include IP headers
-        s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+        s.setsockopt(socket.IPPROTO_TCP, socket.IP_HDRINCL, 1)
 
         # receive all packages
         s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
 
         # receive a package
-        os.system('cls')
+        # os.system('cls')
         data = self.getData(s)
         # get the IP header (the first 20 bytes) and unpack them
         # ! - network
@@ -40,9 +40,13 @@ class Sniffer:
             '[8 bits]  Protocol': self.getProtocol(unpackedData[6]),
             '[16 bits] Checksum': str(unpackedData[7]),
             '[32 bits] Source Address': socket.inet_ntoa(unpackedData[8]),
-            '[32 bits] Destination Address': socket.inet_ntoa(unpackedData[9])
+            '[32 bits] Destination Address': socket.inet_ntoa(unpackedData[9]),
+            '[rest]    Payload': data[20:]
         }
 
+
+
+        '''
         for key, value in info.items():
             print '\033[92m' + key + '\033[0m'
             if key == '[8 bit]  Type of Services':
@@ -50,6 +54,7 @@ class Sniffer:
                     print "  " + key1 + ": " + value1
             else:
                 print "  " + str(value)
+        '''
 
         # disabled promiscuous mode
         s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
@@ -161,4 +166,5 @@ class Sniffer:
 
 if __name__ == "__main__":
     sniffer = Sniffer()
-    sniffer.main()
+    while True:
+        sniffer.main()
