@@ -11,65 +11,59 @@ class Sniffer:
 
         # create a raw socket and bind it to the public interface
         s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
-        s.bind((HOST, 0)) # ip like 192.168.1.1
+        s.bind((HOST, 0))  # ip like 192.168.1.1
 
         # Include IP headers
-        s.setsockopt(socket.IPPROTO_TCP, socket.IP_HDRINCL, 1)
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
 
         # receive all packages
         s.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
 
         # receive a package
-        # os.system('cls')
-        data = self.getData(s)
-        # get the IP header (the first 20 bytes) and unpack them
-        # ! - network
-        # B - unsigned char (1 byte)
-        # H - unsigned short (2 bytes)
-        # s - string
-        unpackedData = struct.unpack('!BBHHHBBH4s4s', data[:20])
-        info = {
-            '[4 bits]  Version': self.getVersion(unpackedData),
-            '[4 bits]  IHL': self.getIHL(unpackedData),
-            '[8 bits]  Type of Services': self.getTypeOfService(unpackedData),
-            '[16 bits] Total Length': unpackedData[2],
-            '[16 bits] Identification': unpackedData[3],
-            '[3 bits]  Flags': self.getFlags(unpackedData),
-            '[13 bits] Fragment Offset': unpackedData[4] & 0x1FFF,
-            '[8 bits]  Time to Live (TTL)': str(unpackedData[5]),
-            '[8 bits]  Protocol': self.getProtocol(unpackedData[6]),
-            '[16 bits] Checksum': str(unpackedData[7]),
-            '[32 bits] Source Address': socket.inet_ntoa(unpackedData[8]),
-            '[32 bits] Destination Address': socket.inet_ntoa(unpackedData[9]),
-            '[rest]    Payload': data[20:]
-        }
+        while True:
+            # os.system('cls')
+            data = ''
+            try:
+                data = s.recvfrom(65565)
+            except socket.timeout:
+                data[0] = 'dick'
+            except:
+                print 'An error happened'
+                # exit program
+                sys.exc_info()
+            data = data[0]
+            # get the IP header (the first 20 bytes) and unpack them
+            # ! - network
+            # B - unsigned char (1 byte)
+            # H - unsigned short (2 bytes)
+            # s - string
+            unpackedData = struct.unpack('!BBHHHBBH4s4s', data[:20])
+            info = {
+                '[4 bits]  Version': self.getVersion(unpackedData),
+                '[4 bits]  IHL': self.getIHL(unpackedData),
+                '[8 bits]  Type of Services': self.getTypeOfService(unpackedData),
+                '[16 bits] Total Length': unpackedData[2],
+                '[16 bits] Identification': unpackedData[3],
+                '[3 bits]  Flags': self.getFlags(unpackedData),
+                '[13 bits] Fragment Offset': unpackedData[4] & 0x1FFF,
+                '[8 bits]  Time to Live (TTL)': str(unpackedData[5]),
+                '[8 bits]  Protocol': self.getProtocol(unpackedData[6]),
+                '[16 bits] Checksum': str(unpackedData[7]),
+                '[32 bits] Source Address': socket.inet_ntoa(unpackedData[8]),
+                '[32 bits] Destination Address': socket.inet_ntoa(unpackedData[9]),
+                '[rest]    Payload': data[20:]
+            }
 
-
-
-        '''
-        for key, value in info.items():
-            print '\033[92m' + key + '\033[0m'
-            if key == '[8 bit]  Type of Services':
-                for key1, value1 in value.iteritems():
-                    print "  " + key1 + ": " + value1
-            else:
-                print "  " + str(value)
-        '''
+            for key, value in info.items():
+                print '\033[92m' + key + '\033[0m'
+                if key == '[8 bit]  Type of Services':
+                    for key1, value1 in value.iteritems():
+                        print "  " + key1 + ": " + value1
+                else:
+                    print "  " + str(value)
 
         # disabled promiscuous mode
         s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
-
-    def getData(self, s):
-        data = ''
-        try:
-            data = s.recvfrom(65565)
-        except socket.timeout:
-            data = ''
-        except:
-            print 'An error happened'
-            # exit program
-            sys.exc_info()
-        return data[0]
 
     # 4 bits
     def getVersion(self, unpackedData):
@@ -166,5 +160,4 @@ class Sniffer:
 
 if __name__ == "__main__":
     sniffer = Sniffer()
-    while True:
-        sniffer.main()
+    sniffer.main()
